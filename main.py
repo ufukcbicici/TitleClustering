@@ -14,6 +14,10 @@ def test_io():
     for idx in range(corpus1.clearedTitles.shape[0]):
         assert np.array_equal(corpus1.clearedTitles[idx], corpus2.clearedTitles[idx])
 
+
 def main():
     test_io()
     print("X")
+
+
+main()

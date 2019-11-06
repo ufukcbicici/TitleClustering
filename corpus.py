@@ -4,7 +4,7 @@ import re
 
 
 class Corpus:
-    FILTER_REGEX = "[^a-zA-Z\d\s\-]|[\r\n]"
+    FILTER_REGEX = "[^a-zA-Z\d\s\-,，\\/]|[\r\n]"
 
     def __init__(self):
         self.clearedTitles = None
@@ -23,8 +23,13 @@ class Corpus:
         self.clearedTitles = []
         with open("cleared_titles.txt", "r") as file:
             title = file.readline()
-            words = re.split("\s", title)
-            self.clearedTitles.append(np.array(words))
+            while title:
+                words = re.split("\s", title[:-1])
+                if len(words) == 1 and words[0] == '':
+                    self.clearedTitles.append(np.array([]))
+                else:
+                    self.clearedTitles.append(np.array(words))
+                title = file.readline()
         self.clearedTitles = np.array(self.clearedTitles)
 
     def clear_titles(self):
@@ -34,7 +39,8 @@ class Corpus:
         for i in range(titles_df.shape[0]):
             raw_title = titles_df.loc[i][0]
             cleared_title = re.sub(Corpus.FILTER_REGEX, "", raw_title)
-            words = re.split("[/\s-]", cleared_title)
+            words = re.split("[\\-,，\s]", cleared_title)
             words = [word.capitalize() for word in words if word != ""]
             self.clearedTitles.append(np.array(words))
+            print("Title {0}: {1}".format(i, self.clearedTitles[-1]))
         self.clearedTitles = np.array(self.clearedTitles)
