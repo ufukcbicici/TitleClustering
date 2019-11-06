@@ -1,13 +1,25 @@
 import numpy as np
 import pandas as pd
-import re
+import regex
+from collections import Counter
 
 
 class Corpus:
     FILTER_REGEX = "[^a-zA-Z\d\s\-,，\\/]|[\r\n]"
+    WORD_SPLIT_REGEX = "[/\\-,，\s]"
+    EMAIL_MATCHER = "[a-zA-Z0-9\_\.\+\-]++@[a-zA-Z0-9\-]++\.[a-zA-Z0-9\-\.]++"
+    URL_MATCHER = "((?<=\s)pic\.|www\.|https?\:\s?)[^\s]++|[0-9a-z\.]+\.([Cc](?:[Oo](?:[Mm]))|N(?:ET|et)|TR|tr|e(?:du|u)|E(?:DU|U)|net|org|GOV|gov|ORG|fr|FR|az|DE|RU|de|ru)[^\'\"\s]*+"
+    DATE_MATCHER = "(?<=[\s\n])[0-9]{2}+([\.\-\/])[0-9]{2}+\1[0-9]{4}+(?!\1)"
+    NUMBER_MATCHER = "(?:(?<=\s)\-)?(?<![0-9\.]|(?<!\sNO)(?<!\sK)\:)[0-9]++(([\,][0-9]++)++|(\.[0-9]++)++(\,[0-9]++)?|(?=[^\.\,\:])|[\.\,]++(?=$|\s))"
+
+    EMAIL_TOKEN = "EMAIL"
+    URL_TOKEN = "URL"
+    DATE_TOKEN = "DATE"
+    NUMBER_TOKEN = "NUMBER"
 
     def __init__(self):
         self.clearedTitles = None
+        self.words = []
 
     def save_cleared_titles(self):
         with open("cleared_titles.txt", "w") as file:
@@ -24,7 +36,7 @@ class Corpus:
         with open("cleared_titles.txt", "r") as file:
             title = file.readline()
             while title:
-                words = re.split("\s", title[:-1])
+                words = regex.split("\s", title[:-1])
                 if len(words) == 1 and words[0] == '':
                     self.clearedTitles.append(np.array([]))
                 else:
@@ -36,11 +48,43 @@ class Corpus:
         titles_df = pd.read_csv('titles.csv')
         # Clear data
         self.clearedTitles = []
+        # First clear, then split
+        # for i in range(titles_df.shape[0]):
+        #     raw_title = titles_df.loc[i][0]
+        #     cleared_title = re.sub(Corpus.FILTER_REGEX, "", raw_title)
+        #     words = re.split("[\\-,，\s]", cleared_title)
+        #     words = [word.capitalize() for word in words if word != ""]
+        #     self.clearedTitles.append(np.array(words))
+        #     print("Title {0}: {1}".format(i, self.clearedTitles[-1]))
+
+        # First split then clear
         for i in range(titles_df.shape[0]):
-            raw_title = titles_df.loc[i][0]
-            cleared_title = re.sub(Corpus.FILTER_REGEX, "", raw_title)
-            words = re.split("[\\-,，\s]", cleared_title)
-            words = [word.capitalize() for word in words if word != ""]
+            title = titles_df.loc[i][0]
+            # Step 1: Lower Case
+            title = title.lower()
+            # Step 2: Find and Replace Emails
+            title = regex.sub(Corpus.EMAIL_MATCHER, Corpus.EMAIL_TOKEN, title)
+            # Step 3: Find and Replace URLs
+            title = regex.sub(Corpus.URL_MATCHER, Corpus.URL_TOKEN, title)
+            # Step 4: Find and Replace Dates
+            title = regex.sub(Corpus.DATE_MATCHER, Corpus.DATE_TOKEN, title)
+            # Step 5: Clean non-alphanumeric etc. characters
+            title = regex.sub(Corpus.FILTER_REGEX, "", title)
+            # Step 6: Split into words
+            words = regex.split(Corpus.WORD_SPLIT_REGEX, title)
+            # Step 7: Skip empty tokens
+            words = [word for word in words if word != ""]
+            # Step 8: Add to cleared titles
             self.clearedTitles.append(np.array(words))
             print("Title {0}: {1}".format(i, self.clearedTitles[-1]))
         self.clearedTitles = np.array(self.clearedTitles)
+
+    def build_corpus(self):
+        word_list = []
+        for words in self.clearedTitles:
+            if len(words) == 0:
+                continue
+            for word in words:
+                word_list.append(word)
+        counter = Counter(word_list)
+        print("X")

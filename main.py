@@ -16,7 +16,10 @@ def test_io():
 
 
 def main():
-    test_io()
+    # test_io()
+    corpus = Corpus()
+    corpus.clear_titles()
+    corpus.build_corpus()
     print("X")
 
 
