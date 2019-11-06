@@ -2,6 +2,7 @@ import numpy as np
 import pandas as pd
 import regex
 from collections import Counter
+from sklearn.preprocessing import LabelEncoder
 
 
 class Corpus:
@@ -19,7 +20,9 @@ class Corpus:
 
     def __init__(self):
         self.clearedTitles = None
-        self.words = []
+        self.vocabulary = None
+        self.vocabularyFreqs = None
+        self.labelEncoder = None
 
     def save_cleared_titles(self):
         with open("cleared_titles.txt", "w") as file:
@@ -86,5 +89,8 @@ class Corpus:
                 continue
             for word in words:
                 word_list.append(word)
-        counter = Counter(word_list)
+        self.vocabularyFreqs = Counter(word_list)
+        self.vocabulary = list(self.vocabularyFreqs.keys())
+        self.labelEncoder = LabelEncoder()
+        self.labelEncoder.fit(self.vocabulary)
         print("X")
