@@ -1,5 +1,6 @@
 import numpy as np
 from corpus import Corpus
+from word2vec.cbow_embedding_model import CbowEmbeddingGenerator
 
 
 def test_io():
@@ -20,6 +21,8 @@ def main():
     corpus = Corpus()
     corpus.clear_titles()
     corpus.build_corpus()
+    embedding_model = CbowEmbeddingGenerator(corpus=corpus)
+    embedding_model.build_network()
     print("X")
 
 

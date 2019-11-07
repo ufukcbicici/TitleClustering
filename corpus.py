@@ -4,6 +4,9 @@ import regex
 from collections import Counter
 from sklearn.preprocessing import LabelEncoder
 
+from constants import Constants
+from dblogger import DbLogger
+
 
 class Corpus:
     FILTER_REGEX = "[^a-zA-Z\d\s\-,，\\/]|[\r\n]"
@@ -91,6 +94,46 @@ class Corpus:
                 word_list.append(word)
         self.vocabularyFreqs = Counter(word_list)
         self.vocabulary = list(self.vocabularyFreqs.keys())
+        self.vocabulary.append("UNK")
         self.labelEncoder = LabelEncoder()
         self.labelEncoder.fit(self.vocabulary)
-        print("X")
+
+    def build_contexts(self):
+        rows = []
+        table_name = "cbow_context_window_{0}_table".format(Constants.CBOW_WINDOW_SIZE)
+        # Delete cbow table
+        DbLogger.delete_table(table=table_name)
+        sequence_count = 0
+        for title in self.clearedTitles:
+            if len(title) <= 1:
+                continue
+            for token_index, target_token in enumerate(title):
+                context = []
+                # Harvest a context
+                for delta in range(-Constants.CBOW_WINDOW_SIZE, Constants.CBOW_WINDOW_SIZE + 1):
+                    t = delta + token_index
+                    if t < 0 or t >= len(title):
+                        context.append("UNK")
+                    elif t == token_index:
+                        assert target_token == title[token_index]
+                        continue
+                    else:
+                        token = title[t]
+                        context.append(token)
+                context.append(target_token)
+                assert len(context) == 2 * Constants.CBOW_WINDOW_SIZE + 1
+                rows.append(tuple(context))
+            sequence_count += 1
+            if sequence_count % 10000 == 0:
+                print("{0} sequences have been processed.".format(sequence_count))
+            if len(rows) >= 100000:
+                print("CBOW tokens written to DB.")
+                DbLogger.write_into_table(rows=rows, table=table_name,
+                                          col_count=2 * Constants.CBOW_WINDOW_SIZE + 1)
+                rows = []
+        if len(rows) > 0:
+            DbLogger.write_into_table(rows=rows, table=table_name,
+                                      col_count=2 * Constants.CBOW_WINDOW_SIZE + 1)
+
+    def get_vocabulary_size(self):
+        return len(self.vocabulary)
