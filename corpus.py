@@ -26,6 +26,7 @@ class Corpus:
         self.vocabulary = None
         self.vocabularyFreqs = None
         self.labelEncoder = None
+        self.embeddingContextsAndTargets = None
 
     def save_cleared_titles(self):
         with open("cleared_titles.txt", "w") as file:
@@ -104,6 +105,7 @@ class Corpus:
         # Delete cbow table
         DbLogger.delete_table(table=table_name)
         sequence_count = 0
+        context_arr = []
         for title in self.clearedTitles:
             if len(title) <= 1:
                 continue
@@ -123,6 +125,8 @@ class Corpus:
                 context.append(target_token)
                 assert len(context) == 2 * Constants.CBOW_WINDOW_SIZE + 1
                 rows.append(tuple(context))
+                label_ids = self.labelEncoder.transform(context)
+                context_arr.append(np.expand_dims(label_ids, axis=0))
             sequence_count += 1
             if sequence_count % 10000 == 0:
                 print("{0} sequences have been processed.".format(sequence_count))
@@ -134,6 +138,29 @@ class Corpus:
         if len(rows) > 0:
             DbLogger.write_into_table(rows=rows, table=table_name,
                                       col_count=2 * Constants.CBOW_WINDOW_SIZE + 1)
+        self.embeddingContextsAndTargets = np.concatenate(context_arr, axis=0)
+
+    def read_cbow_data(self):
+        table_name = "cbow_skip_window_{0}_table".format(Constants.CBOW_WINDOW_SIZE)
+        condition = ""
+        # for i in range(2 * Constants.CBOW_WINDOW_SIZE):
+        #     condition += "Token{0} != -1".format(i)
+        #     if i < 2 * GlobalConstants.CBOW_WINDOW_SIZE - 1:
+        #         condition += " AND "
+        rows = DbLogger.read_tuples_from_table(table_name=table_name)
+        self.embeddingContextsAndTargets = np.zeros(shape=(len(rows), 2 * Constants.CBOW_WINDOW_SIZE + 1),
+                                                    dtype=np.int32)
+        context_arr = []
+        print("Reading cbow data.")
+        for i in range(len(rows)):
+            row = rows[i]
+            label_ids = self.labelEncoder.transform(row)
+            context_arr.append(np.expand_dims(label_ids, axis=0))
+            # for j in range(2 * Constants.CBOW_WINDOW_SIZE):
+            #     self.embeddingContextsAndTargets[i, j] = row[j]
+            # self.embeddingContextsAndTargets[i, -1] = row[-1]
+        self.embeddingContextsAndTargets = np.concatenate(context_arr, axis=0)
+        print("Reading completed. There are {0} contexts.".format(self.embeddingContextsAndTargets.shape[0]))
 
     def get_vocabulary_size(self):
         return len(self.vocabulary)
