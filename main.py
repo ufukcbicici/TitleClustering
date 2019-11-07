@@ -23,6 +23,8 @@ def main():
     corpus.build_corpus()
     corpus.build_contexts()
     embedding_model = CbowEmbeddingGenerator(corpus=corpus)
+    embeddingsOriginal = np.copy(corpus.embeddingContextsAndTargets)
+    corpus.read_cbow_data()
     embedding_model.build_network()
     print("X")
 

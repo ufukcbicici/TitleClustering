@@ -99,6 +99,11 @@ class Corpus:
         self.labelEncoder = LabelEncoder()
         self.labelEncoder.fit(self.vocabulary)
 
+    def encode_context_data(self, context_arr_2D):
+        context_arr_flat = np.reshape(context_arr_2D, newshape=(context_arr_2D.shape[0] * context_arr_2D.shape[1], ))
+        label_ids = self.labelEncoder.transform(context_arr_flat)
+        self.embeddingContextsAndTargets = np.reshape(label_ids, newshape=context_arr_2D.shape)
+
     def build_contexts(self):
         rows = []
         table_name = "cbow_context_window_{0}_table".format(Constants.CBOW_WINDOW_SIZE)
@@ -125,10 +130,9 @@ class Corpus:
                 context.append(target_token)
                 assert len(context) == 2 * Constants.CBOW_WINDOW_SIZE + 1
                 rows.append(tuple(context))
-                label_ids = self.labelEncoder.transform(context)
-                context_arr.append(np.expand_dims(label_ids, axis=0))
+                context_arr.append(np.expand_dims(context, axis=0))
             sequence_count += 1
-            if sequence_count % 10000 == 0:
+            if sequence_count % 1000 == 0:
                 print("{0} sequences have been processed.".format(sequence_count))
             if len(rows) >= 100000:
                 print("CBOW tokens written to DB.")
@@ -138,10 +142,11 @@ class Corpus:
         if len(rows) > 0:
             DbLogger.write_into_table(rows=rows, table=table_name,
                                       col_count=2 * Constants.CBOW_WINDOW_SIZE + 1)
-        self.embeddingContextsAndTargets = np.concatenate(context_arr, axis=0)
+        context_arr_2D = np.concatenate(context_arr, axis=0)
+        self.encode_context_data(context_arr_2D=context_arr_2D)
 
     def read_cbow_data(self):
-        table_name = "cbow_skip_window_{0}_table".format(Constants.CBOW_WINDOW_SIZE)
+        table_name = "cbow_context_window_{0}_table".format(Constants.CBOW_WINDOW_SIZE)
         condition = ""
         # for i in range(2 * Constants.CBOW_WINDOW_SIZE):
         #     condition += "Token{0} != -1".format(i)
@@ -154,12 +159,14 @@ class Corpus:
         print("Reading cbow data.")
         for i in range(len(rows)):
             row = rows[i]
-            label_ids = self.labelEncoder.transform(row)
-            context_arr.append(np.expand_dims(label_ids, axis=0))
+            # label_ids = self.labelEncoder.transform(row)
+            # context_arr.append(np.expand_dims(label_ids, axis=0))
+            context_arr.append(np.expand_dims(np.array(row), axis=0))
             # for j in range(2 * Constants.CBOW_WINDOW_SIZE):
             #     self.embeddingContextsAndTargets[i, j] = row[j]
             # self.embeddingContextsAndTargets[i, -1] = row[-1]
-        self.embeddingContextsAndTargets = np.concatenate(context_arr, axis=0)
+        context_arr_2D = np.concatenate(context_arr, axis=0)
+        self.encode_context_data(context_arr_2D=context_arr_2D)
         print("Reading completed. There are {0} contexts.".format(self.embeddingContextsAndTargets.shape[0]))
 
     def get_vocabulary_size(self):
