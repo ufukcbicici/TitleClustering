@@ -208,3 +208,21 @@ class Corpus:
         else:
             self.isNewEpoch = False
         return context, targets, weights
+
+    def validate(self, embeddings):
+        embedding_norms = np.linalg.norm(embeddings, axis=1)
+        embedding_norms = np.reshape(embedding_norms, newshape=(embedding_norms.shape[0], 1))
+        normalized_embeddings = embeddings / embedding_norms
+        validation_tokens = Constants.VALIDATION_TOKENS
+        for token in validation_tokens:
+            token_id = self.labelEncoder.transform([token])[0]
+            token_embedding = normalized_embeddings[token_id]
+            token_embedding = np.reshape(token_embedding, newshape=(token_embedding.shape[0], 1))
+            embedding_cosines = np.dot(normalized_embeddings, token_embedding)
+            embedding_cosines = np.reshape(embedding_cosines, newshape=(embedding_cosines.shape[0],))
+            sorted_indices = np.argsort(embedding_cosines)[::-1]
+            print_str = "{0}   :".format(token)
+            for i in range(10):
+                print_str += "{0},".format(self.labelEncoder.inverse_transform([sorted_indices[i]])[0])
+            print_str = print_str[0:len(print_str) - 1]
+            print(print_str)

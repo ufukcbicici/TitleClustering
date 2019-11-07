@@ -83,12 +83,13 @@ class CbowEmbeddingGenerator:
                     losses = []
                 iteration_count += 1
                 if self.corpus.isNewEpoch:
+                # if iteration_count % 1 == 0:
                     # Save embeddings to HD
                     path = os.path.abspath(os.path.join(os.path.dirname(os.path.abspath(__file__)),
-                                                        "embeddings", "embedding_epoch{0}.ckpt".format(epoch_id)))
+                                                        "..", "embeddings", "embedding_epoch{0}.ckpt".format(epoch_id)))
                     saver.save(sess, path)
                     # embeddings_arr = self.embeddings.eval(session=sess)
-                    # self.corpus.validate(corpus=self.corpus, embeddings=self.get_embeddings(sess=sess))
+                    self.corpus.validate(embeddings=self.get_embeddings(sess=sess))
                     break
         print("X")
 
