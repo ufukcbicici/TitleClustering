@@ -44,7 +44,6 @@ class CbowEmbeddingGenerator:
         window_size = Constants.CBOW_WINDOW_SIZE
         num_negative_sampling = Constants.NUM_NEGATIVE_SAMPLES
         # Build the operations
-        context_embeddings = []
         for i in range(2 * window_size):
             embedding_vectors = tf.nn.embedding_lookup(self.embeddings, self.trainContext[:, i])
             self.rawEmbeddings.append(embedding_vectors)
