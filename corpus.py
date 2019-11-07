@@ -27,6 +27,9 @@ class Corpus:
         self.vocabularyFreqs = None
         self.labelEncoder = None
         self.embeddingContextsAndTargets = None
+        self.currentIndex = None
+        self.currentIndices = None
+        self.isNewEpoch = True
 
     def save_cleared_titles(self):
         with open("cleared_titles.txt", "w") as file:
@@ -169,5 +172,38 @@ class Corpus:
         self.encode_context_data(context_arr_2D=context_arr_2D)
         print("Reading completed. There are {0} contexts.".format(self.embeddingContextsAndTargets.shape[0]))
 
+    def reset_training_state(self):
+        self.currentIndices = np.array(range(self.embeddingContextsAndTargets.shape[0]))
+        self.isNewEpoch = True
+        np.random.shuffle(self.currentIndices)
+        self.currentIndex = 0
+
     def get_vocabulary_size(self):
         return len(self.vocabulary)
+
+    def get_next_batch(self, batch_size):
+        num_of_samples = len(self.embeddingContextsAndTargets)
+        curr_end_index = self.currentIndex + batch_size - 1
+        # Check if the interval [curr_start_index, curr_end_index] is inside data boundaries.
+        if 0 <= self.currentIndex and curr_end_index < num_of_samples:
+            indices_list = self.currentIndices[self.currentIndex:curr_end_index + 1]
+        elif self.currentIndex < num_of_samples <= curr_end_index:
+            indices_list = self.currentIndices[self.currentIndex:num_of_samples]
+            curr_end_index = curr_end_index % num_of_samples
+            indices_list = np.concatenate([indices_list, self.currentIndices[0:curr_end_index + 1]])
+        else:
+            raise Exception("Invalid index positions: self.currentIndex={0} - curr_end_index={1}"
+                            .format(self.currentIndex, curr_end_index))
+        self.currentIndex = self.currentIndex + batch_size
+        context = self.embeddingContextsAndTargets[indices_list, 0:2 * Constants.CBOW_WINDOW_SIZE]
+        targets = self.embeddingContextsAndTargets[indices_list, -1]
+        unk_label = self.labelEncoder.transform(np.array(["UNK"]))[0]
+        valid_entries = (context != unk_label).astype(np.float32)
+        valid_entries_count = np.sum(valid_entries, axis=1)
+        weights_per_row = np.reciprocal(valid_entries_count.astype(np.float32))
+        weights = valid_entries * np.expand_dims(weights_per_row, axis=1)
+        if num_of_samples <= self.currentIndex:
+            self.reset_training_state()
+        else:
+            self.isNewEpoch = False
+        return context, targets, weights

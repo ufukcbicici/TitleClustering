@@ -1,4 +1,6 @@
 import numpy as np
+
+from constants import Constants
 from corpus import Corpus
 from word2vec.cbow_embedding_model import CbowEmbeddingGenerator
 
@@ -21,10 +23,11 @@ def main():
     corpus = Corpus()
     corpus.clear_titles()
     corpus.build_corpus()
-    corpus.build_contexts()
-    embedding_model = CbowEmbeddingGenerator(corpus=corpus)
-    embeddingsOriginal = np.copy(corpus.embeddingContextsAndTargets)
     corpus.read_cbow_data()
+    corpus.reset_training_state()
+    corpus.get_next_batch(batch_size=Constants.EMBEDDING_BATCH_SIZE)
+    # corpus.build_contexts()
+    embedding_model = CbowEmbeddingGenerator(corpus=corpus)
     embedding_model.build_network()
     print("X")
 
