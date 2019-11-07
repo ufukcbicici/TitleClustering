@@ -106,6 +106,7 @@ class Corpus:
         context_arr_flat = np.reshape(context_arr_2D, newshape=(context_arr_2D.shape[0] * context_arr_2D.shape[1], ))
         label_ids = self.labelEncoder.transform(context_arr_flat)
         self.embeddingContextsAndTargets = np.reshape(label_ids, newshape=context_arr_2D.shape)
+        self.reset_training_state()
 
     def build_contexts(self):
         rows = []

@@ -24,11 +24,11 @@ def main():
     corpus.clear_titles()
     corpus.build_corpus()
     corpus.read_cbow_data()
-    corpus.reset_training_state()
-    corpus.get_next_batch(batch_size=Constants.EMBEDDING_BATCH_SIZE)
     # corpus.build_contexts()
     embedding_model = CbowEmbeddingGenerator(corpus=corpus)
     embedding_model.build_network()
+    embedding_model.test_embedding_network()
+    embedding_model.train()
     print("X")
 
 
