@@ -1,7 +1,10 @@
 import numpy as np
+import os
 import pandas as pd
 import regex
+import gensim
 from collections import Counter
+import pickle
 from sklearn.preprocessing import LabelEncoder
 
 from constants import Constants
@@ -54,19 +57,11 @@ class Corpus:
                 title = file.readline()
         self.clearedTitles = np.array(self.clearedTitles)
 
-    def clear_titles(self):
+    def build_corpus(self):
         titles_df = pd.read_csv('titles.csv')
         # Clear data
         self.clearedTitles = []
-        # First clear, then split
-        # for i in range(titles_df.shape[0]):
-        #     raw_title = titles_df.loc[i][0]
-        #     cleared_title = re.sub(Corpus.FILTER_REGEX, "", raw_title)
-        #     words = re.split("[\\-,，\s]", cleared_title)
-        #     words = [word.capitalize() for word in words if word != ""]
-        #     self.clearedTitles.append(np.array(words))
-        #     print("Title {0}: {1}".format(i, self.clearedTitles[-1]))
-
+        word_list = []
         # First split then clear
         for i in range(titles_df.shape[0]):
             title = titles_df.loc[i][0]
@@ -80,149 +75,33 @@ class Corpus:
             title = regex.sub(Corpus.DATE_MATCHER, Corpus.DATE_TOKEN, title)
             # Step 5: Clean non-alphanumeric etc. characters
             title = regex.sub(Corpus.FILTER_REGEX, "", title)
-            # Step 6: Split into words
+            # Step 6: Remove stop words using gensim's preprocessor
+            title = gensim.parsing.preprocessing.remove_stopwords(title)
+            # Step 7: Split into words
             words = regex.split(Corpus.WORD_SPLIT_REGEX, title)
-            # Step 7: Skip empty tokens
+            # Step 8: Skip empty tokens
             words = [word for word in words if word != ""]
-            # Step 8: Add to cleared titles
+            # Step 9: Add to cleared titles
             self.clearedTitles.append(np.array(words))
+            word_list.extend(words)
             print("Title {0}: {1}".format(i, self.clearedTitles[-1]))
         self.clearedTitles = np.array(self.clearedTitles)
-
-    def build_corpus(self):
-        word_list = []
-        for words in self.clearedTitles:
-            if len(words) == 0:
-                continue
-            for word in words:
-                word_list.append(word)
         self.vocabularyFreqs = Counter(word_list)
         self.vocabulary = list(self.vocabularyFreqs.keys())
-        self.vocabulary.append("UNK")
-        self.labelEncoder = LabelEncoder()
-        self.labelEncoder.fit(self.vocabulary)
+        pickle.dump(self.clearedTitles,
+                    open(os.path.abspath(os.path.join(os.path.dirname(os.path.abspath(__file__)),
+                                                      "saved_data", "clearedTitles.sav")), 'wb'))
+        pickle.dump(self.vocabularyFreqs, open(os.path.abspath(os.path.join(os.path.dirname(os.path.abspath(__file__)),
+                                                                            "saved_data", "vocabularyFreqs.sav")),
+                                               'wb'))
+        pickle.dump(self.vocabulary, open(os.path.abspath(os.path.join(os.path.dirname(os.path.abspath(__file__)),
+                                                                       "saved_data", "vocabulary.sav")), 'wb'))
 
-    def encode_context_data(self, context_arr_2D):
-        context_arr_flat = np.reshape(context_arr_2D, newshape=(context_arr_2D.shape[0] * context_arr_2D.shape[1], ))
-        label_ids = self.labelEncoder.transform(context_arr_flat)
-        self.embeddingContextsAndTargets = np.reshape(label_ids, newshape=context_arr_2D.shape)
-        self.reset_training_state()
-
-    def build_contexts(self):
-        rows = []
-        table_name = "cbow_context_window_{0}_table".format(Constants.CBOW_WINDOW_SIZE)
-        # Delete cbow table
-        DbLogger.delete_table(table=table_name)
-        sequence_count = 0
-        context_arr = []
-        for title in self.clearedTitles:
-            if len(title) <= 1:
-                continue
-            for token_index, target_token in enumerate(title):
-                context = []
-                # Harvest a context
-                for delta in range(-Constants.CBOW_WINDOW_SIZE, Constants.CBOW_WINDOW_SIZE + 1):
-                    t = delta + token_index
-                    if t < 0 or t >= len(title):
-                        context.append("UNK")
-                    elif t == token_index:
-                        assert target_token == title[token_index]
-                        continue
-                    else:
-                        token = title[t]
-                        context.append(token)
-                context.append(target_token)
-                assert len(context) == 2 * Constants.CBOW_WINDOW_SIZE + 1
-                rows.append(tuple(context))
-                context_arr.append(np.expand_dims(context, axis=0))
-            sequence_count += 1
-            if sequence_count % 1000 == 0:
-                print("{0} sequences have been processed.".format(sequence_count))
-            if len(rows) >= 100000:
-                print("CBOW tokens written to DB.")
-                DbLogger.write_into_table(rows=rows, table=table_name,
-                                          col_count=2 * Constants.CBOW_WINDOW_SIZE + 1)
-                rows = []
-        if len(rows) > 0:
-            DbLogger.write_into_table(rows=rows, table=table_name,
-                                      col_count=2 * Constants.CBOW_WINDOW_SIZE + 1)
-        context_arr_2D = np.concatenate(context_arr, axis=0)
-        self.encode_context_data(context_arr_2D=context_arr_2D)
-
-    def read_cbow_data(self):
-        table_name = "cbow_context_window_{0}_table".format(Constants.CBOW_WINDOW_SIZE)
-        condition = ""
-        # for i in range(2 * Constants.CBOW_WINDOW_SIZE):
-        #     condition += "Token{0} != -1".format(i)
-        #     if i < 2 * GlobalConstants.CBOW_WINDOW_SIZE - 1:
-        #         condition += " AND "
-        rows = DbLogger.read_tuples_from_table(table_name=table_name)
-        self.embeddingContextsAndTargets = np.zeros(shape=(len(rows), 2 * Constants.CBOW_WINDOW_SIZE + 1),
-                                                    dtype=np.int32)
-        context_arr = []
-        print("Reading cbow data.")
-        for i in range(len(rows)):
-            row = rows[i]
-            # label_ids = self.labelEncoder.transform(row)
-            # context_arr.append(np.expand_dims(label_ids, axis=0))
-            context_arr.append(np.expand_dims(np.array(row), axis=0))
-            # for j in range(2 * Constants.CBOW_WINDOW_SIZE):
-            #     self.embeddingContextsAndTargets[i, j] = row[j]
-            # self.embeddingContextsAndTargets[i, -1] = row[-1]
-        context_arr_2D = np.concatenate(context_arr, axis=0)
-        self.encode_context_data(context_arr_2D=context_arr_2D)
-        print("Reading completed. There are {0} contexts.".format(self.embeddingContextsAndTargets.shape[0]))
-
-    def reset_training_state(self):
-        self.currentIndices = np.array(range(self.embeddingContextsAndTargets.shape[0]))
-        self.isNewEpoch = True
-        np.random.shuffle(self.currentIndices)
-        self.currentIndex = 0
-
-    def get_vocabulary_size(self):
-        return len(self.vocabulary)
-
-    def get_next_batch(self, batch_size):
-        num_of_samples = len(self.embeddingContextsAndTargets)
-        curr_end_index = self.currentIndex + batch_size - 1
-        # Check if the interval [curr_start_index, curr_end_index] is inside data boundaries.
-        if 0 <= self.currentIndex and curr_end_index < num_of_samples:
-            indices_list = self.currentIndices[self.currentIndex:curr_end_index + 1]
-        elif self.currentIndex < num_of_samples <= curr_end_index:
-            indices_list = self.currentIndices[self.currentIndex:num_of_samples]
-            curr_end_index = curr_end_index % num_of_samples
-            indices_list = np.concatenate([indices_list, self.currentIndices[0:curr_end_index + 1]])
-        else:
-            raise Exception("Invalid index positions: self.currentIndex={0} - curr_end_index={1}"
-                            .format(self.currentIndex, curr_end_index))
-        self.currentIndex = self.currentIndex + batch_size
-        context = self.embeddingContextsAndTargets[indices_list, 0:2 * Constants.CBOW_WINDOW_SIZE]
-        targets = self.embeddingContextsAndTargets[indices_list, -1]
-        unk_label = self.labelEncoder.transform(np.array(["UNK"]))[0]
-        valid_entries = (context != unk_label).astype(np.float32)
-        valid_entries_count = np.sum(valid_entries, axis=1)
-        weights_per_row = np.reciprocal(valid_entries_count.astype(np.float32))
-        weights = valid_entries * np.expand_dims(weights_per_row, axis=1)
-        if num_of_samples <= self.currentIndex:
-            self.reset_training_state()
-        else:
-            self.isNewEpoch = False
-        return context, targets, weights
-
-    def validate(self, embeddings):
-        embedding_norms = np.linalg.norm(embeddings, axis=1)
-        embedding_norms = np.reshape(embedding_norms, newshape=(embedding_norms.shape[0], 1))
-        normalized_embeddings = embeddings / embedding_norms
-        validation_tokens = Constants.VALIDATION_TOKENS
-        for token in validation_tokens:
-            token_id = self.labelEncoder.transform([token])[0]
-            token_embedding = normalized_embeddings[token_id]
-            token_embedding = np.reshape(token_embedding, newshape=(token_embedding.shape[0], 1))
-            embedding_cosines = np.dot(normalized_embeddings, token_embedding)
-            embedding_cosines = np.reshape(embedding_cosines, newshape=(embedding_cosines.shape[0],))
-            sorted_indices = np.argsort(embedding_cosines)[::-1]
-            print_str = "{0}   :".format(token)
-            for i in range(10):
-                print_str += "{0},".format(self.labelEncoder.inverse_transform([sorted_indices[i]])[0])
-            print_str = print_str[0:len(print_str) - 1]
-            print(print_str)
+    def load_corpus(self):
+        self.clearedTitles = pickle.load(open(os.path.abspath(os.path.join(os.path.dirname(os.path.abspath(__file__)),
+                                                                           "saved_data", "clearedTitles.sav")), 'rb'))
+        self.vocabularyFreqs = pickle.load(open(os.path.abspath(os.path.join(os.path.dirname(os.path.abspath(__file__)),
+                                                                             "saved_data", "vocabularyFreqs.sav")),
+                                                'rb'))
+        self.vocabulary = pickle.load(open(os.path.abspath(os.path.join(os.path.dirname(os.path.abspath(__file__)),
+                                                                        "saved_data", "vocabulary.sav")), 'rb'))
