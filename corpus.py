@@ -105,3 +105,14 @@ class Corpus:
                                                 'rb'))
         self.vocabulary = pickle.load(open(os.path.abspath(os.path.join(os.path.dirname(os.path.abspath(__file__)),
                                                                         "saved_data", "vocabulary.sav")), 'rb'))
+
+    def validate(self, embedding_model):
+        for word in Constants.VALIDATION_TOKENS:
+            similarities = []
+            for other_word in self.vocabulary:
+                # if other_word == "UNK" or other_word in set_of_stop_words:
+                #     continue
+                similarities.append((other_word, embedding_model.similarity(word, other_word)))
+            similarities = sorted(similarities, key=lambda tpl: tpl[1])
+            print("Word:{0}".format(word))
+            print(similarities[::-1][0:10])
