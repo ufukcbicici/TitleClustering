@@ -23,8 +23,18 @@ def test_io():
 
 def train_gensim(corpus):
     sentences = [title.tolist() for title in corpus.clearedTitles if len(title) >= 1]
-    model = gensim.models.Word2Vec(sentences, min_count=1, iter=1000)
-    print("X")
+    vocabulary = corpus.vocabulary
+    model = gensim.models.Word2Vec(sentences, min_count=1, iter=100)
+    similarities = []
+    for word in Constants.VALIDATION_TOKENS:
+        for other_word in vocabulary:
+            if other_word == "UNK":
+                continue
+            similarities.append((other_word, model.similarity(word, other_word)))
+        similarities = sorted(similarities, key=lambda tpl: tpl[1])
+        print("Word:{0}".format(word))
+        print(similarities[::-1][0:10])
+        print("X")
 
 
 def main():
