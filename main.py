@@ -35,7 +35,7 @@ def train_gensim(corpus):
                 set_of_stop_words.add(word)
         sentences_without_stop_words.append(filtered_sentence)
     vocabulary = corpus.vocabulary
-    model = gensim.models.Word2Vec(sentences_without_stop_words, min_count=1, iter=100)
+    model = gensim.models.Word2Vec(sentences_without_stop_words, min_count=1, iter=1000)
     for word in Constants.VALIDATION_TOKENS:
         similarities = []
         for other_word in vocabulary:
