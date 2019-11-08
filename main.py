@@ -25,8 +25,8 @@ def train_gensim(corpus):
     sentences = [title.tolist() for title in corpus.clearedTitles if len(title) >= 1]
     vocabulary = corpus.vocabulary
     model = gensim.models.Word2Vec(sentences, min_count=1, iter=100)
-    similarities = []
     for word in Constants.VALIDATION_TOKENS:
+        similarities = []
         for other_word in vocabulary:
             if other_word == "UNK":
                 continue
