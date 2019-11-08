@@ -3,7 +3,7 @@ class Constants:
     EMBEDDING_BATCH_SIZE = 128
     EMBEDDING_SIZE = 150
     NUM_NEGATIVE_SAMPLES = 128
-    EPOCH_COUNT = 1000
+    EPOCH_COUNT = 250
     VALIDATION_TOKENS = ["associate", "director", "manager", "assistant", "marketing", "ceo",
                          "account", "sales", "developer", "java", "finance", "resources", "teacher", "data"]
 
