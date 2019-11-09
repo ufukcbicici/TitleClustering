@@ -12,31 +12,31 @@ from k_medoids import KMedoids
 logging.basicConfig(format='%(asctime)s : %(levelname)s : %(message)s', level=logging.INFO)
 
 
-def train_gensim(corpus):
-    sentences = [sentence.tolist() for sentence in corpus.clearedTitles]
-    vocabulary = corpus.vocabulary
-    min_count = 5
-    model = gensim.models.Word2Vec(sentences, min_count=min_count, iter=Constants.EPOCH_COUNT)
-    path = os.path.abspath(os.path.join(os.path.dirname(os.path.abspath(__file__)), "saved_data",
-                                        "word2vec_model_{0}_min_freq_{1}".format(Constants.EPOCH_COUNT, min_count)))
-    model.save(path)
-    corpus.validate(model)
-
-
-    # for word_1 in corpus.vocabulary:
-    #     for word_2 in corpus.vocabulary:
-    #         distance_dict[(word_1, word_2)] = 1.0 - (0.5 * (embedding_model.similarity(word_1, word_2) + 1.0))
-    # path = os.path.abspath(os.path.join(os.path.dirname(os.path.abspath(__file__)), "saved_data",
-    #                                     "distance_dict.sav"))
-    # pickle.dump(distance_dict, path)
-
-
-def load_word2vec_model(corpus):
-    path = os.path.abspath(os.path.join(os.path.dirname(os.path.abspath(__file__)), "saved_data",
-                                        "word2vec_model_{0}".format(Constants.EPOCH_COUNT)))
-    model = gensim.models.Word2Vec.load(path)
-    corpus.validate(model)
-    return model
+# def train_gensim(corpus):
+#     sentences = [sentence.tolist() for sentence in corpus.clearedTitles]
+#     vocabulary = corpus.vocabulary
+#     min_count = 5
+#     model = gensim.models.Word2Vec(sentences, min_count=min_count, iter=Constants.EPOCH_COUNT)
+#     path = os.path.abspath(os.path.join(os.path.dirname(os.path.abspath(__file__)), "saved_data",
+#                                         "word2vec_model_{0}_min_freq_{1}".format(Constants.EPOCH_COUNT, min_count)))
+#     model.save(path)
+#     corpus.validate(model)
+#
+#
+#     # for word_1 in corpus.vocabulary:
+#     #     for word_2 in corpus.vocabulary:
+#     #         distance_dict[(word_1, word_2)] = 1.0 - (0.5 * (embedding_model.similarity(word_1, word_2) + 1.0))
+#     # path = os.path.abspath(os.path.join(os.path.dirname(os.path.abspath(__file__)), "saved_data",
+#     #                                     "distance_dict.sav"))
+#     # pickle.dump(distance_dict, path)
+#
+#
+# def load_word2vec_model(corpus):
+#     path = os.path.abspath(os.path.join(os.path.dirname(os.path.abspath(__file__)), "saved_data",
+#                                         "word2vec_model_{0}_min_freq_5".format(Constants.EPOCH_COUNT)))
+#     model = gensim.models.Word2Vec.load(path)
+#     corpus.validate(model)
+#     return model
 
 
 # def k_medoids(corpus, similiarities, cluster_count, max_iter=100):
@@ -60,7 +60,7 @@ def main():
     corpus = Corpus()
     # corpus.build_corpus()
     corpus.load_corpus()
-    train_gensim(corpus)
+    # train_gensim(corpus)
     # w2v_model = load_word2vec_model(corpus)
     #
     # def calculate_distance(word_0, word_1):

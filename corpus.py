@@ -109,7 +109,7 @@ class Corpus:
     def validate(self, embedding_model):
         for word in Constants.VALIDATION_TOKENS:
             similarities = []
-            for other_word in self.vocabulary:
+            for other_word in embedding_model.wv.vocab.keys():
                 # if other_word == "UNK" or other_word in set_of_stop_words:
                 #     continue
                 similarities.append((other_word, embedding_model.similarity(word, other_word)))
