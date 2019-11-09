@@ -7,6 +7,7 @@ import gensim, logging
 import os
 import pickle
 
+from embedding_generator import EmbeddingGenerator
 from k_medoids import KMedoids
 
 logging.basicConfig(format='%(asctime)s : %(levelname)s : %(message)s', level=logging.INFO)
@@ -60,6 +61,8 @@ def main():
     corpus = Corpus()
     # corpus.build_corpus()
     corpus.load_corpus()
+    embedding_model = EmbeddingGenerator(corpus=corpus)
+    embedding_model.train_model(min_freq=Constants.MIN_FREQ, epoch_count=Constants.EPOCH_COUNT)
     # train_gensim(corpus)
     # w2v_model = load_word2vec_model(corpus)
     #

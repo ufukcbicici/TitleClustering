@@ -4,6 +4,7 @@ class Constants:
     EMBEDDING_SIZE = 150
     NUM_NEGATIVE_SAMPLES = 128
     EPOCH_COUNT = 250
+    MIN_FREQ = 5
     VALIDATION_TOKENS = ["associate", "director", "manager", "assistant", "marketing", "ceo",
                          "account", "sales", "developer", "java", "finance", "resources", "teacher", "data", "nurse"]
 
