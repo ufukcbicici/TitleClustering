@@ -5,7 +5,7 @@ class Constants:
     NUM_NEGATIVE_SAMPLES = 128
     EPOCH_COUNT = 250
     VALIDATION_TOKENS = ["associate", "director", "manager", "assistant", "marketing", "ceo",
-                         "account", "sales", "developer", "java", "finance", "resources", "teacher", "data"]
+                         "account", "sales", "developer", "java", "finance", "resources", "teacher", "data", "nurse"]
 
     # [('associate', 15712),
     #  ('director', 15643),
