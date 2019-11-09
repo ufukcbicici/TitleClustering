@@ -70,7 +70,7 @@ def main():
 
     k_medoids = KMedoids(vocabulary=embedding_model.model.wv.vocab, distance_matrix=embedding_model.distanceMatrix,
                          distance_func=embedding_model.distance_func)
-    k_medoids.run(vocabulary=list(embedding_model.model.wv.vocab.keys()), cluster_count=100, max_iter=1000)
+    k_medoids.run(cluster_count=100, max_iter=1000)
     print("X")
 
     # train_gensim(corpus)
