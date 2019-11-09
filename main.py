@@ -62,7 +62,13 @@ def main():
     # corpus.build_corpus()
     corpus.load_corpus()
     embedding_model = EmbeddingGenerator(corpus=corpus)
-    embedding_model.train_model(min_freq=Constants.MIN_FREQ, epoch_count=Constants.EPOCH_COUNT)
+    embedding_model.load_model(min_freq=Constants.MIN_FREQ, epoch_count=Constants.EPOCH_COUNT)
+    # embedding_model.train_model(min_freq=Constants.MIN_FREQ, epoch_count=Constants.EPOCH_COUNT)
+    embedding_model.build_similarity_matrix()
+    embedding_model.build_distance_matrix()
+    embedding_model.distance_func("gp", "training")
+    print("X")
+
     # train_gensim(corpus)
     # w2v_model = load_word2vec_model(corpus)
     #
