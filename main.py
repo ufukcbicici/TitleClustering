@@ -67,6 +67,10 @@ def main():
     embedding_model.build_similarity_matrix()
     embedding_model.build_distance_matrix()
     embedding_model.distance_func("gp", "training")
+
+    k_medoids = KMedoids(vocabulary=embedding_model.model.wv.vocab, distance_matrix=embedding_model.distanceMatrix,
+                         distance_func=embedding_model.distance_func)
+    k_medoids.run(vocabulary=list(embedding_model.model.wv.vocab.keys()), cluster_count=100, max_iter=1000)
     print("X")
 
     # train_gensim(corpus)
