@@ -61,12 +61,6 @@ class TitleClusteringAlgorithm:
         for title in self.corpus.clearedTitles:
             if len(title) == 0:
                 continue
-            # Bow methods:
-            # "frequencies": The number of times a word w belonging to the i.th cluster is coded in the i. dimension.
-            # "normalized_frequencies": Same as "frequencies" but the vector is normalized to make the sum 1.
-            # "weighted_distances" For each for w in the title, cosine similarities with the i.th cluster center is measured and averaged.
-            #  This is encoded into the i. dimension.
-            # bow_vector = np.zeros((self.normalizedDictionary.shape[0], ))
             word_indices = [vocab[w].index for w in title if w in vocab]
             title_str = " ".join(title)
             if len(word_indices) == 0:
