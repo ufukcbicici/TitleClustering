@@ -63,7 +63,7 @@ def main():
     # test_io()
     corpus = Corpus()
     corpus.build_corpus()
-    corpus.load_corpus()
+    # corpus.load_corpus()
     embedding_model = EmbeddingGenerator(corpus=corpus)
     embedding_model.train_model(min_freq=Constants.MIN_FREQ, epoch_count=Constants.EPOCH_COUNT)
     # embedding_model.load_model(min_freq=Constants.MIN_FREQ, epoch_count=Constants.EPOCH_COUNT)
