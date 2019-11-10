@@ -8,6 +8,7 @@ from corpus import Corpus
 import gensim, logging
 import os
 import pickle
+import csv
 
 
 class TitleClusteringAlgorithm:
@@ -42,11 +43,24 @@ class TitleClusteringAlgorithm:
         cluster_names, clusters_with_freqs = self.get_cluster_names(clusters=clusters)
 
         # Part 4: Build bag-of-words vector out of dictionaries
+        title_assignments = self.assign_titles_to_clusters(wv=self.emdeddingGenerator.model.wv,
+                                                           cluster_names=cluster_names)
+        # Write out assignments
+        csv_data = [["Title", "Assigned Cluster Name"]]
+        csv_data.extend([[k, v] for k, v in title_assignments.items()])
+        csv_path = os.path.abspath(os.path.join(os.path.dirname(os.path.abspath(__file__)), "saved_data", "output.csv"))
+        with open(csv_path, 'w') as csvFile:
+            writer = csv.writer(csvFile)
+            writer.writerows(csv_data)
+        csvFile.close()
+        return title_assignments
 
-    def assign_titles_to_clusters(self, wv, method, cluster_names):
+    def assign_titles_to_clusters(self, wv, cluster_names, method="max_of_individual_similarities"):
         vocab = wv.vocab
         title_assignments = {}
         for title in self.corpus.clearedTitles:
+            if len(title) == 0:
+                continue
             # Bow methods:
             # "frequencies": The number of times a word w belonging to the i.th cluster is coded in the i. dimension.
             # "normalized_frequencies": Same as "frequencies" but the vector is normalized to make the sum 1.
@@ -56,6 +70,7 @@ class TitleClusteringAlgorithm:
             word_indices = [vocab[w].index for w in title if w in vocab]
             title_str = " ".join(title)
             if len(word_indices) == 0:
+                title_assignments[title_str] = "Other"
                 continue
             title_arr = []
             for idx in word_indices:
@@ -68,7 +83,7 @@ class TitleClusteringAlgorithm:
             elif method == "max_of_individual_similarities":
                 argmax_clusters = np.argmax(distances_to_dictionary, axis=0)
                 coeffs = np.zeros_like(distances_to_dictionary)
-                coeffs[np.array([i for i in range(distances_to_dictionary.shape[1])]), argmax_clusters] = 1.0
+                coeffs[argmax_clusters, np.array([i for i in range(distances_to_dictionary.shape[1])])] = 1.0
                 selected_distances = coeffs * distances_to_dictionary
                 total_distances = np.sum(selected_distances, axis=1)
                 cluster_id = np.argmax(total_distances)
