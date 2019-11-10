@@ -14,6 +14,9 @@ class TitleClusteringAlgorithm:
     def __init__(self, corpus, embedding_generator):
         self.corpus = corpus
         self.emdeddingGenerator = embedding_generator
+        self.normalizedDictionary = None
+        self.clusters = None
+        self.clustersWithFreqs = None
 
     def run(self, dictionary_size=300):
         # Part 1: Dictionary Learning
@@ -51,3 +54,27 @@ class TitleClusteringAlgorithm:
             sorted_words_and_freqs = sorted(words_and_freqs, key=lambda tpl: tpl[1], reverse=True)
             clusters_with_freqs[cluster_id] = sorted_words_and_freqs
         print("X")
+        self.normalizedDictionary = normalized_dictionary
+        self.clusters = clusters
+        self.clustersWithFreqs = clusters_with_freqs
+        pickle.dump(self.normalizedDictionary,
+                    open(os.path.abspath(os.path.join(os.path.dirname(os.path.abspath(__file__)), "saved_data",
+                                                      "normalizedDictionary.sav")), 'wb'))
+        pickle.dump(self.clusters,
+                    open(os.path.abspath(os.path.join(os.path.dirname(os.path.abspath(__file__)), "saved_data",
+                                                      "clusters.sav")), 'wb'))
+        pickle.dump(self.clustersWithFreqs,
+                    open(os.path.abspath(os.path.join(os.path.dirname(os.path.abspath(__file__)), "saved_data",
+                                                      "clustersWithFreqs.sav")), 'wb'))
+
+    def load_clustering_data(self):
+        self.normalizedDictionary = pickle.load(
+            open(os.path.abspath(os.path.join(os.path.dirname(os.path.abspath(__file__)), "saved_data",
+                                              "normalizedDictionary.sav")), 'rb'))
+        self.clusters = pickle.load(
+            open(os.path.abspath(os.path.join(os.path.dirname(os.path.abspath(__file__)), "saved_data",
+                                              "clusters.sav")), 'rb'))
+        self.clustersWithFreqs = pickle.load(
+            open(os.path.abspath(os.path.join(os.path.dirname(os.path.abspath(__file__)), "saved_data",
+                                              "clustersWithFreqs.sav")), 'rb'))
+
