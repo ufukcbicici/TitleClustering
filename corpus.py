@@ -71,8 +71,9 @@ class Corpus:
             title = regex.sub(Corpus.EMAIL_MATCHER, Corpus.EMAIL_TOKEN, title)
             # Step 3: Find and Replace URLs
             title = regex.sub(Corpus.URL_MATCHER, Corpus.URL_TOKEN, title)
-            # Step 4: Find and Replace Dates
+            # Step 4: Find and Replace Dates + Numbers
             title = regex.sub(Corpus.DATE_MATCHER, Corpus.DATE_TOKEN, title)
+            # title = regex.sub(Corpus.NUMBER_MATCHER, Corpus.NUMBER_TOKEN, title)
             # Step 5: Clean non-alphanumeric etc. characters
             title = regex.sub(Corpus.FILTER_REGEX, "", title)
             # Step 6: Remove stop words using gensim's preprocessor

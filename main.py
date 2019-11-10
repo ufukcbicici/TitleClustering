@@ -1,4 +1,6 @@
 import numpy as np
+from sklearn.cluster import KMeans
+from collections import Counter
 
 from constants import Constants
 from corpus import Corpus
@@ -9,6 +11,7 @@ import pickle
 
 from embedding_generator import EmbeddingGenerator
 from k_medoids import KMedoids
+from title_clustering_algorithm import TitleClusteringAlgorithm
 
 logging.basicConfig(format='%(asctime)s : %(levelname)s : %(message)s', level=logging.INFO)
 
@@ -59,19 +62,38 @@ logging.basicConfig(format='%(asctime)s : %(levelname)s : %(message)s', level=lo
 def main():
     # test_io()
     corpus = Corpus()
-    # corpus.build_corpus()
+    corpus.build_corpus()
     corpus.load_corpus()
     embedding_model = EmbeddingGenerator(corpus=corpus)
-    embedding_model.load_model(min_freq=Constants.MIN_FREQ, epoch_count=Constants.EPOCH_COUNT)
-    # embedding_model.train_model(min_freq=Constants.MIN_FREQ, epoch_count=Constants.EPOCH_COUNT)
-    embedding_model.build_similarity_matrix()
-    embedding_model.build_distance_matrix()
-    embedding_model.distance_func("gp", "training")
+    embedding_model.train_model(min_freq=Constants.MIN_FREQ, epoch_count=Constants.EPOCH_COUNT)
+    # embedding_model.load_model(min_freq=Constants.MIN_FREQ, epoch_count=Constants.EPOCH_COUNT)
 
-    k_medoids = KMedoids(vocabulary=embedding_model.model.wv.vocab, distance_matrix=embedding_model.distanceMatrix,
-                         distance_func=embedding_model.distance_func)
-    k_medoids.run(cluster_count=100, max_iter=1000)
-    print("X")
+    title_clustering_algorithm = TitleClusteringAlgorithm(corpus=corpus, embedding_generator=embedding_model)
+    title_clustering_algorithm.run(dictionary_size=50)
+    #     # Get vectors
+    # vectors = np.copy(embedding_model.model.wv.vectors)
+    # norms = np.linalg.norm(vectors, axis=1, keepdims=True)
+    # normalized_vectors = np.reciprocal(norms) * vectors
+    # kmeans = KMeans(n_clusters=300, random_state=0)
+    # kmeans.fit(normalized_vectors)
+    # counter = Counter(kmeans.labels_)
+    #
+    #
+    # print("X")
+
+
+
+
+
+
+    # embedding_model.build_similarity_matrix()
+    # embedding_model.build_distance_matrix()
+    # embedding_model.distance_func("gp", "training")
+    #
+    # k_medoids = KMedoids(vocabulary=embedding_model.model.wv.vocab, distance_matrix=embedding_model.distanceMatrix,
+    #                      distance_func=embedding_model.distance_func)
+    # k_medoids.run(cluster_count=100, max_iter=1000)
+    # print("X")
 
     # train_gensim(corpus)
     # w2v_model = load_word2vec_model(corpus)

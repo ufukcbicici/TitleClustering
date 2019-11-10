@@ -6,7 +6,50 @@ import pickle
 
 class EmbeddingGenerator:
     def __init__(self, corpus):
-        self.corpus = corpus
+        self.corpus = corpus4
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+        11111
         self.model = None
         self.minFreq = None
         self.epochCount = None
